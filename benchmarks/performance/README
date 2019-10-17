@@ -1,0 +1,7 @@
+For the bouns part, you need to find and hoist as many instructions as possible. You also need to determine which instructions can benefit the most from the hoisting. We will evaluate the correctness of your pass first, then the execution time (performance).
+
+Execution time for original porgrams (Measured with eecs583b):
+hw2perf1.c : ~ 20sec
+hw2perf2.c : ~ 24sec
+hw2perf3.c : ~ 34sec
+hw2perf4.c : ~ 37sec

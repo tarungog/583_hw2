@@ -1,0 +1,18 @@
+For the base part of HW2, you only need to find and then hoist the load instruction that depends on the infrequent store. After applying your pass, the modified program should generate the same output as the origianl program. Your pass will be evaluated using the following 6 tests for the correctness:
+
+Note, heuristic considers BBs with biased branch (edge prob>=0.8) as frequent path and hoist almost invariant loads on this path.
+
+hw2correct1.c: No infrequent BB. No instruction needs to be hoisted.
+
+hw2correct2.c: One infrequent BB, with store-load dependency. One Load Instruction (load i32, i32* %j, align 4) needs to be hoisted.
+
+hw2correct3.c: One infrequent BB, with store-load dependency. However, the dependency also exists in frequent BB. Therefore, no instruction needs to be hoisted.
+
+hw2correct4.c: Multiple infrequent BBs, store(s)-load dependency exist in multiple infrequent BBs. Hoist the load (load i32, i32* %j, align 4), but need to perform the fixup in multiple infrequent BBs.
+
+hw2correct5.c: One infrequent BB, with store-loads dependency. Two loads (load i32, i32* %j, align 4) can be hoisted.
+
+hw2correct6.c: Multiple infrequent BBs, stores-loads dependencies exist in multiple infrequent BBs. Two load instructions (load i32, i32* %k, align 4) and (load i32, i32* %j, align 4) need to be hoisted, also need the fixup in corresponding infrequent BBs.
+
+
+Once the load instruction gets hoisted, a number of dependent instructions then become hoistable. Try to find and hoist all of them! (Bouns Part) 
