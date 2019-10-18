@@ -438,7 +438,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
 
       for (User *U : load->users()) {
         if (Instruction *I = dyn_cast<Instruction>(U)) {
-          errs() << *I << std::endl;
+          errs() << *I << '\n';
         }
       }
 
