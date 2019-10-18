@@ -303,38 +303,38 @@ private:
 }//namespace
 
 const BasicBlock * hotsucc(const BasicBlock *BB, BranchProbabilityInfo *BPI) {
-  auto MaxProb = BranchProbability::getZero();
-  const BasicBlock *MaxSucc = nullptr;
-    
-  for (succ_const_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
-    const BasicBlock *Succ = *I;
-    auto Prob = BPI -> getEdgeProbability(BB, Succ);
-      if (Prob > MaxProb) {
-        MaxProb = Prob;
-        MaxSucc = Succ;
-      }
-    }
-    
-    // Hot probability is at least 4/5 = 80%
-    if (MaxProb >= BranchProbability(4, 5))
-      return MaxSucc;
-    
-  return nullptr;
+  auto MaxProb = BranchProbability::getZero();
+  const BasicBlock *MaxSucc = nullptr;
+
+  for (succ_const_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
+    const BasicBlock *Succ = *I;
+    auto Prob = BPI -> getEdgeProbability(BB, Succ);
+    if (Prob > MaxProb) {
+      MaxProb = Prob;
+      MaxSucc = Succ;
+    }
+}
+
+// Hot probability is at least 4/5 = 80%
+if (MaxProb >= BranchProbability(4, 5))
+  return MaxSucc;
+
+  return nullptr;
 }
 
 bool isInFrequentPath(BasicBlock *block, Loop *L, BranchProbabilityInfo *BPI) {
-  BasicBlock *header = L->getHeader();
-  const BasicBlock *next = header;
-    
-  while (1) {
-    if (next != nullptr) {
-      if (block == next) return true;
-    }
-    else break;
-    next = hotsucc(next, BPI);
-    if (next == header) break;
-  }
-  return false;
+  BasicBlock *header = L->getHeader();
+  const BasicBlock *next = header;
+
+  while (1) {
+    if (next != nullptr) {
+      if (block == next) return true;
+    }
+    else break;
+    next = hotsucc(next, BPI);
+    if (next == header) break;
+  }
+  return false;
 }
 
 /// Hoist expressions out of the specified loop. Note, alias info for inner
@@ -344,36 +344,36 @@ bool isInFrequentPath(BasicBlock *block, Loop *L, BranchProbabilityInfo *BPI) {
 /// memory leak.
 ///
 bool Correctness::LoopInvariantCodeMotion::runOnLoop(
-    Loop *L, AliasAnalysis *AA, LoopInfo *LI, DominatorTree *DT,
-    TargetLibraryInfo *TLI, TargetTransformInfo *TTI, ScalarEvolution *SE,
-    MemorySSA *MSSA, OptimizationRemarkEmitter *ORE, bool DeleteAST,
-    BranchProbabilityInfo *BPI, BlockFrequencyInfo *BFI) {
+  Loop *L, AliasAnalysis *AA, LoopInfo *LI, DominatorTree *DT,
+  TargetLibraryInfo *TLI, TargetTransformInfo *TTI, ScalarEvolution *SE,
+  MemorySSA *MSSA, OptimizationRemarkEmitter *ORE, bool DeleteAST,
+  BranchProbabilityInfo *BPI, BlockFrequencyInfo *BFI) {
 
 
-  bool Changed = false;
+  bool Changed = false;
 
-  assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");
+  assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");
 
-  std::unique_ptr<AliasSetTracker> CurAST;
-  std::unique_ptr<MemorySSAUpdater> MSSAU;
-  if (!MSSA) {
-    LLVM_DEBUG(dbgs() << "FPLICM: Using Alias Set Tracker.\n");
-    CurAST = collectAliasInfoForLoop(L, LI, AA);
-  } else {
-    LLVM_DEBUG(dbgs() << "FPLICM: Using MemorySSA. Promotion disabled.\n");
-    MSSAU = make_unique<MemorySSAUpdater>(MSSA);
-  }
+  std::unique_ptr<AliasSetTracker> CurAST;
+  std::unique_ptr<MemorySSAUpdater> MSSAU;
+  if (!MSSA) {
+  LLVM_DEBUG(dbgs() << "FPLICM: Using Alias Set Tracker.\n");
+  CurAST = collectAliasInfoForLoop(L, LI, AA);
+  } else {
+  LLVM_DEBUG(dbgs() << "FPLICM: Using MemorySSA. Promotion disabled.\n");
+  MSSAU = make_unique<MemorySSAUpdater>(MSSA);
+  }
 
-  // Get the preheader block to move instructions into...
-  BasicBlock *Preheader = L->getLoopPreheader();
+  // Get the preheader block to move instructions into...
+  BasicBlock *Preheader = L->getLoopPreheader();
 
-  // Compute loop safety information.
-  ICFLoopSafetyInfo SafetyInfo(DT);
-  SafetyInfo.computeLoopSafetyInfo(L);
+  // Compute loop safety information.
+  ICFLoopSafetyInfo SafetyInfo(DT);
+  SafetyInfo.computeLoopSafetyInfo(L);
 
-  // *****************************************************************
-  //     HW2-Requirement: Implement FPLICM for correctness test
-  // *****************************************************************
+  // *****************************************************************
+  //HW2-Requirement: Implement FPLICM for correctness test
+  // *****************************************************************
 
 
   std::unordered_map<Instruction*, std::vector<Instruction*>>
