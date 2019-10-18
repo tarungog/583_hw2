@@ -387,7 +387,6 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // std::vector<std::pair<Instruction*, std::vector<Instruction*>>> hoisting;
   for (BasicBlock *block: L->getBlocks()) {
     Instruction *hoisting = nullptr;
-    bool freq = isInFrequentPath(block, L, BPI);
     for (Instruction &I : *block) { // iterate instructions
       if (hoisting) {
         errs() << "Hoisted instruction: " << *hoisting << "\n";
@@ -396,13 +395,12 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       hoisting = nullptr;
 
       if (isa<LoadInst>(I)) {
-        if (freq) {
+        if (isInFrequentPath(block, L, BPI)) {
           bool storeFoundInFrequent = false;
           for(BasicBlock *block2 : L->getBlocks()) {
-            bool freq2 = isInFrequentPath(block2, L, BPI);
               for (Instruction &I2 : *block2) { // iterate instructions
                 if (isa<StoreInst>(I2)) {
-                  if (freq2) {
+                  if (isInFrequentPath(block2, L, BPI)) {
                     if (I.getOperand(0) == I2.getOperand(1)) {
                         storeFoundInFrequent = true;
                         break;
