@@ -432,18 +432,18 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       new_load->setOperand(0, Val);
       new_load->insertAfter(prev);
 
-      for (User *U : load->users()) {
-        if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
-          auto new_store = SI->clone();
-          new_store->insertAfter(SI);
-          new_store->setOperand(1, Val);
-        }
-        else if (Instruction *I = dyn_cast<Instruction>(U)) {
-          for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
-            if (I->getOperand(i) == load) I->setOperand(i, new_load);
-          }
-        }
-      }
+      // for (User *U : load->users()) {
+      //   if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+      //     auto new_store = SI->clone();
+      //     new_store->insertAfter(SI);
+      //     new_store->setOperand(1, Val);
+      //   }
+      //   else if (Instruction *I = dyn_cast<Instruction>(U)) {
+      //     for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
+      //       if (I->getOperand(i) == load) I->setOperand(i, new_load);
+      //     }
+      //   }
+      // }
     }
   }
 
