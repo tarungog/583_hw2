@@ -387,7 +387,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   std::map<Value*, std::vector<std::pair<Instruction*, bool>>> stores;
 
   for (BasicBlock *block: L->getBlocks()) {
-    bool freqpath = isInFrequentPath(block, L, BPI)
+    bool freqpath = isInFrequentPath(block, L, BPI);
     for (Instruction &I : *block) {
         if (isa<LoadInst>(*I)) loads[I.getPointerOperand()] = &I;
         if (isa<StoreInst>(*I))
@@ -395,8 +395,8 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     }
   }
 
-  for (auto it: loads) {
-    auto &store_vec = stores[it->first];
+  for (auto &it: loads) {
+    auto &store_vec = stores[it.first];
     bool loaded_in_freq = false;
     bool loaded_in_infreq = false;
     for (auto iter: store_vec) {
