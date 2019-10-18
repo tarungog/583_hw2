@@ -370,60 +370,61 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
   //     HW2-Requirement: Implement FPLICM for correctness test
   // *****************************************************************
+
+
+  std::unordered_map<Instruction*, std::vector<Instruction*>
+
   std::vector<std::pair<Instruction*, std::vector<Instruction*>>> hoisting;
   for(BasicBlock *block: L->getBlocks()) {
-      Instruction *hoisting = nullptr;
-      for (Instruction &I : *block) { // iterate instructions
-          if (hoisting != nullptr) {
-              errs() << "Hoisted instruction: " << *hoisting << "\n";
-              hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
-          }
-          hoisting = nullptr;
-          if (isa<LoadInst>(I)) {
-              if (isInFrequentPath(block, L, BPI)) {
-                  bool storeFoundInFrequent = false;
-                  for(BasicBlock *block2 : L->getBlocks()) {
-                      for (Instruction &I2 : *block2) { // iterate instructions
-                          if (isa<StoreInst>(I2)) {
-                              if (isInFrequentPath(block2, L, BPI)) {
-                                  if (I.getOperand(0) == I2.getOperand(1)) {
-                                      storeFoundInFrequent = true;
-                                  }
-                              }
-                          }
-                      }
+    Instruction *hoisting = nullptr;
+    bool freq = isInFrequentPath(block, L, BPI);
+    for (Instruction &I : *block) { // iterate instructions
+      if (hoisting != nullptr) {
+        errs() << "Hoisted instruction: " << *hoisting << "\n";
+        hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+      }
+      hoisting = nullptr;
+      if (isa<LoadInst>(I)) {
+        if (freq) {
+          bool storeFoundInFrequent = false;
+          for(BasicBlock *block2 : L->getBlocks()) {
+            bool freq2 = isInFrequentPath(block2, L, BPI);
+              for (Instruction &I2 : *block2) { // iterate instructions
+                if (isa<StoreInst>(I2)) {
+                  if (freq2) {
+                    if (I.getOperand(0) == I2.getOperand(1)) {
+                        storeFoundInFrequent = true;
+                    }
                   }
-
-                  std::vector<Instruction*> stores;
-                  if (!storeFoundInFrequent) {
-                      for(BasicBlock *block2 : L->getBlocks()) {
-                          for (Instruction &I2 : *block2) { // iterate instructions
-                              if (isa<StoreInst>(I2)) {
-                                  if (!isInFrequentPath(block2, L, BPI)) {
-                                      if (I.getOperand(0) == I2.getOperand(1)) {
-
-                                          hoisting = &I;
-
-                                          auto new_instruction = I.clone();
-                                          new_instruction->insertAfter(&I2);
-
-                                          stores.push_back();
-
-                                          Changed = true;
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-
+                }
               }
           }
+          if (!storeFoundInFrequent) {
+            for(BasicBlock *block2 : L->getBlocks()) {
+              for (Instruction &I2 : *block2) { // iterate instructions
+                if (isa<StoreInst>(I2)) {
+                  if (!isInFrequentPath(block2, L, BPI)) {
+                    if (I.getOperand(0) == I2.getOperand(1)) {
+                      hoisting = &I;
+
+                      auto new_instruction = I.clone();
+                      new_instruction->insertAfter(&I2);
+
+                      Changed = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+        }
       }
-      if (hoisting != nullptr) {
-          errs() << "Hoisted instruction: " << *hoisting << "\n";
-          hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
-      }
+    }
+    if (hoisting != nullptr) {
+        errs() << "Hoisted instruction: " << *hoisting << "\n";
+        hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+    }
 
 
   }
