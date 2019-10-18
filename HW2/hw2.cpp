@@ -303,7 +303,7 @@ private:
 }//namespace
 
 void print_basic_block(const BasicBlock *BB) {
-  for (Instruction &I2 : *BB) { // iterate instructions
+  for (const Instruction &I2 : *BB) { // iterate instructions
     errs() << I2 << "\n";
   }
 }
