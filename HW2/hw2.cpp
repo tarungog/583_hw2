@@ -405,7 +405,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                   }
                 }
               }
-            if (storeFoundinFrequent) break;
+            if (storeFoundInFrequent) break;
           }
 
           if (!storeFoundInFrequent) {
