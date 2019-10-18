@@ -436,6 +436,11 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       errs() << "load is " << *load << '\n';
       errs() << "new load is " << *new_load << '\n';
 
+      for (User *U : load->users()) {
+        if (Instruction *I = dyn_cast<Instruction>(U)) {
+          errs() << *I << std::endl;
+        }
+      }
 
       // for (User *U : load->users()) {
       //   if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
