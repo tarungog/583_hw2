@@ -413,6 +413,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
 
                       auto new_instruction = I.clone();
                       new_instruction->insertAfter(&I2);
+                      errs() << "inserted load: " << *new_instruction << "\n";
 
                       Changed = true;
                     }

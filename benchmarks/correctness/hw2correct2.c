@@ -7,7 +7,7 @@ int main(){
 	j = 0;
 	for(i = 0; i < 10; i++) {
   		B[i] = A[j] * 13 + 4 + i;
-  		if(i % 8 == 0) 
+  		if(i % 8 == 0)
   			j = i;
 		printf("%d\n", B[i]);
 	}
