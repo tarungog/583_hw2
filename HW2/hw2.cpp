@@ -422,17 +422,12 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       }
     }
     if (hoisting != nullptr) {
-        errs() << "Hoisted instruction: " << *hoisting << "\n";
-        hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+      errs() << "Hoisted instruction: " << *hoisting << "\n";
+      hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
     }
-
-
   }
-
-  return Changed;
+  return Changed;
 }
-
-
 
 char Performance::FPLICMPass::ID = 1;
 static RegisterPass<Performance::FPLICMPass> Y("fplicm-performance", "Frequent Loop Invariant Code Motion for performance test");
@@ -475,7 +470,6 @@ bool Performance::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
   //     HW2-Optional: Implement FPLICM for performance test (Bonus)
   // *****************************************************************
-
 
   return Changed;
 }
