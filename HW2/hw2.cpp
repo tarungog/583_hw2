@@ -319,11 +319,11 @@ const BasicBlock * hotsucc(const BasicBlock *BB, BranchProbabilityInfo *BPI) {
       MaxProb = Prob;
       MaxSucc = Succ;
     }
-}
+  }
 
-// Hot probability is at least 4/5 = 80%
-if (MaxProb >= BranchProbability(4, 5))
-  return MaxSucc;
+  // Hot probability is at least 4/5 = 80%
+  if (MaxProb >= BranchProbability(4, 5))
+    return MaxSucc;
 
   return nullptr;
 }
@@ -389,10 +389,6 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     Instruction *hoisting = nullptr;
     bool freq = isInFrequentPath(block, L, BPI);
     for (Instruction &I : *block) { // iterate instructions
-      if (hoisting != nullptr) {
-        errs() << "Hoisted instruction: " << *hoisting << "\n";
-        hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
-      }
       hoisting = nullptr;
       if (isa<LoadInst>(I)) {
         if (freq) {
@@ -404,11 +400,14 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                   if (freq2) {
                     if (I.getOperand(0) == I2.getOperand(1)) {
                         storeFoundInFrequent = true;
+                        break;
                     }
                   }
                 }
               }
+            if (storeFoundinFrequent) break;
           }
+
           if (!storeFoundInFrequent) {
             for(BasicBlock *block2 : L->getBlocks()) {
               for (Instruction &I2 : *block2) { // iterate instructions
@@ -417,7 +416,23 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                     if (I.getOperand(0) == I2.getOperand(1)) {
                       hoisting = &I;
 
-                      auto new_instruction = I.clone();
+                      errs() << "Hoisted instruction: " << *hoisting << "\n";
+                      hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+                      // AllocaInst *Val = new AllocaInst(
+                      //   I->getType(),
+                      //   0,
+                      //   0,
+                      //   "",
+                      //   Preheader->getTerminator()
+                      // );
+
+                      // StoreInst *ST = new StoreInst(
+                      //   hoisting,
+                      //   Val,
+                      //   Entry->getTerminator()
+                      // );
+
+                      auto new_instruction = I2.clone();
 
                       errs() << "before changes" << "\n";
 
@@ -425,7 +440,8 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
 
                       new_instruction->insertAfter(&I2);
                       errs() << "inserted load: " << *new_instruction << "\n";
-
+                      errs() << "op0 " << new_instruction.getOperand(0) << " op1 ";
+                      errs() << new_instruction.getOperand(1) << "\n";
                       errs() << "after changes" << "\n";
 
                       print_basic_block(block2);
