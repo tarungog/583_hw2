@@ -1,4 +1,4 @@
-PATH2LIB=~/HW2/build/HW2/LLVMHW2.so        # Specify your build directory in the project
+PATH2LIB=~/583_hw2/HW2/build/HW2/LLVMHW2.so        # Specify your build directory in the project
 PASS=-fplicm-correctness                   # Choose either -fplicm-correctness or -fplicm-performance
 
 # Delete outputs from previous run.
