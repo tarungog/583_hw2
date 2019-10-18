@@ -429,8 +429,8 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       );
 
       auto new_load = load->clone();
-      new_load->setOperand(0, Val);
-      new_load->insertAfter(prev);
+      // new_load->setOperand(0, Val);
+      // new_load->insertAfter(prev);
 
       // for (User *U : load->users()) {
       //   if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
