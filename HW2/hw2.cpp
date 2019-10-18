@@ -304,7 +304,7 @@ private:
 
 void print_basic_block(const BasicBlock *BB) {
   for (Instruction &I2 : *BB) { // iterate instructions
-    errs() << *I2 << "\n";
+    errs() << I2 << "\n";
   }
 }
 
