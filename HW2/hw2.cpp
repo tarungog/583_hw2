@@ -416,7 +416,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       // new_load->setOperand(0, Val);
       errs() << "load is " << *load << '\n';
       errs() << "new load is " << *new_load << '\n';
-      new_load->insertAfter(prev);
+      new_load->insertAfter(load);
 
       hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
 
