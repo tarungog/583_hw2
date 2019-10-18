@@ -376,7 +376,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
 
 
-  std::unordered_map<Instruction*, std::vector<Instruction*> >;
+  std::unordered_map<Instruction*, std::vector<Instruction*> > memdepends;
 
   // std::vector<std::pair<Instruction*, std::vector<Instruction*>>> hoisting;
   for (BasicBlock *block: L->getBlocks()) {
