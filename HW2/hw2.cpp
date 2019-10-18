@@ -422,11 +422,11 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         Preheader->getTerminator()
       );
 
-      // StoreInst *ST = new StoreInst(
-      //   load,
-      //   Val,
-      //   Preheader->getTerminator()
-      // );
+      StoreInst *ST = new StoreInst(
+        load,
+        Val,
+        Preheader->getTerminator()
+      );
 
       // auto new_load = load->clone();
       // new_load->setOperand(0, Val);
