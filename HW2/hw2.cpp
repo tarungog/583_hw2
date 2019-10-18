@@ -403,12 +403,12 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                   if (isInFrequentPath(block2, L, BPI)) {
                     if (I.getOperand(0) == I2.getOperand(1)) {
                         storeFoundInFrequent = true;
-                        break;
+                        // break;
                     }
                   }
                 }
               }
-            if (storeFoundInFrequent) break;
+            // if (storeFoundInFrequent) break;
           }
 
           if (!storeFoundInFrequent) {
