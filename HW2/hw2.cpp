@@ -448,7 +448,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         }
         else if (Instruction *I = dyn_cast<Instruction>(U)) {
           for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
-            if (I->getOperand(i) == load->getReturnValue()) {
+            if (I->getOperand(i) == load) {
               I->setOperand(i, new_load);
               errs() << "replaced operand " << '\n';
             }
