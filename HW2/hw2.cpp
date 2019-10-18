@@ -429,14 +429,14 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       );
 
       auto new_load = load->clone();
-      new_load->setPointerOperand(Val);
+      new_load->Operand(0, Val);
       new_load->insertAfter(prev);
 
       for (User *U : load->users()) {
         if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
           auto new_store = SI->clone();
-          new_store.insertAfter(SI);
-          new_store.setPointerOperand(Val);
+          new_store->insertAfter(SI);
+          new_store->setOperand(1, Val);
         }
         else if (Instruction *I = dyn_cast<Instruction>(U)) {
           for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
