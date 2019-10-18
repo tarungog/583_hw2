@@ -414,23 +414,23 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       Instruction* prev = load->getPrevNonDebugInstruction();
       hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
 
-      AllocaInst *Val = new AllocaInst(
-        load->getType(),
-        0,
-        0,
-        "",
-        Preheader->getTerminator()
-      );
+      // AllocaInst *Val = new AllocaInst(
+      //   load->getType(),
+      //   0,
+      //   0,
+      //   "",
+      //   Preheader->getTerminator()
+      // );
 
-      StoreInst *ST = new StoreInst(
-        load,
-        Val,
-        Preheader->getTerminator()
-      );
+      // StoreInst *ST = new StoreInst(
+      //   load,
+      //   Val,
+      //   Preheader->getTerminator()
+      // );
 
-      auto new_load = load->clone();
-      new_load->setOperand(0, Val);
-      new_load->insertAfter(prev);
+      // auto new_load = load->clone();
+      // new_load->setOperand(0, Val);
+      // new_load->insertAfter(prev);
 
       // for (User *U : load->users()) {
       //   if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
