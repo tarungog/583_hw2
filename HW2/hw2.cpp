@@ -458,15 +458,13 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
 
     for (auto iter: store_vec) {
       Instruction* infreq_store = iter.first;
-      temp_store = infreq_store.clone();
+      temp_store = infreq_store->clone();
       temp_store->setOperand(1, Val);
       temp_store->insertAfter(infreq_store);
 
       errs() << infreq_store << '\n';
       errs() << temp_store << '\n';
-
     }
-
   }
 
 
