@@ -408,71 +408,65 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     }
 
     if (loaded_in_freq) continue;
-    if (loaded_in_infreq) {
-      Changed = true;
-      Instruction* load = it.second;
+    if (!loaded_in_infreq) continue;
 
-      auto new_load = load->clone();
-      new_load->insertAfter(load);
+    Changed = true;
+    Instruction* load = it.second;
 
-      hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+    auto new_load = load->clone();
+    new_load->insertAfter(load);
 
-      AllocaInst *Val = new AllocaInst(
-        load->getType(),
-        0,
-        0,
-        "temp",
-        Preheader->getTerminator()
-      );
+    hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
 
-      StoreInst *ST = new StoreInst(
-        load,
-        Val,
-        Preheader->getTerminator()
-      );
+    AllocaInst *Val = new AllocaInst(
+      load->getType(),
+      0,
+      0,
+      "temp",
+      Preheader->getTerminator()
+    );
 
-      new_load->setOperand(0, Val);
+    StoreInst *ST = new StoreInst(
+      load,
+      Val,
+      Preheader->getTerminator()
+    );
 
-      errs() << "load is " << *load << '\n';
-      errs() << "new load is " << *new_load << '\n';
+    new_load->setOperand(0, Val);
 
-      for (User *U : load->users()) {
-        if (Instruction *I = dyn_cast<Instruction>(U)) {
-          errs() << *I << '\n';
-        }
+    for (User *U : load->users()) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+        continue;
       }
+      else if (Instruction *I = dyn_cast<Instruction>(U)) {
 
-      for (User *U : load->users()) {
-        if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
-          errs() << "found store user operand " << '\n';
 
-          continue;
-        }
-        else if (Instruction *I = dyn_cast<Instruction>(U)) {
-          errs() << "found nonstore user operand " << '\n';
-          errs() << I->getNumOperands() << '\n';
-
-          for (int i = 0; i < I->getNumOperands(); i++) {
-            if (I->getOperand(i) == load) {
-              I->setOperand(i, new_load);
-              errs() << "replaced operand " << '\n';
-              errs() << "new instructino is " << *I << '\n';
-
-            }
-            else {
-              errs() << "didnt replace operand " << '\n';
-            }
+        for (int i = 0; i < I->getNumOperands(); i++) {
+          if (I->getOperand(i) == load) {
+            I->setOperand(i, new_load);
           }
-        }
-      }
 
-      for (User *U : load->users()) {
-        if (Instruction *I = dyn_cast<Instruction>(U)) {
-          errs() << *I << '\n';
         }
       }
+    }
+
+    for (User *U : load->users()) {
+      if (Instruction *I = dyn_cast<Instruction>(U)) {
+        errs() << *I << '\n';
+      }
+    }
+
+    for (auto iter: store_vec) {
+      Instruction* infreq_store = iter.first;
+      temp_store = infreq_store.clone();
+      temp_store->setOperand(1, Val);
+      temp_store->insertAfter(infreq_store);
+
+      errs() << infreq_store << '\n';
+      errs() << temp_store << '\n';
 
     }
+
   }
 
 
