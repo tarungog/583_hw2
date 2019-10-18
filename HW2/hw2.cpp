@@ -391,7 +391,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     for (Instruction &I : *block) {
         if (isa<LoadInst>(*I)) loads[I.getPointerOperand()] = &I;
         if (isa<StoreInst>(*I))
-          stores[I.getPointerOperand()].push_back({&I, freqpath});
+          stores[I.getOperand(1)].push_back({&I, freqpath});
     }
   }
 
@@ -400,7 +400,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     bool loaded_in_freq = false;
     bool loaded_in_infreq = false;
     for (auto iter: store_vec) {
-      if (iter->second) {
+      if (iter.second) {
         loaded_in_freq = true;
       } else {
         loaded_in_infreq = true;
@@ -410,7 +410,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     if (loaded_in_freq) continue;
     if (loaded_in_infreq) {
       Changed = true;
-      Instruction* load = loads[it->first];
+      Instruction* load = it.second;
       Instruction* prev = load->getPrevNonDebugInstruction();
       hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
 
