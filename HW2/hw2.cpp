@@ -450,6 +450,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         }
         else if (Instruction *I = dyn_cast<Instruction>(U)) {
           errs() << "found nonstore user operand " << '\n';
+          errs() << I->getNumOperands() << '\n';
 
           for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
             if (I->getOperand(i) == load) {
