@@ -298,29 +298,39 @@ private:
 
 }//namespace
 
-bool isInFrequentPath(BasicBlock *block, BasicBlock *header, BranchProbabilityInfo *BPI) {    
-    const BasicBlock *next = header;
+const BasicBlock * hotsucc(const BasicBlock *BB, BranchProbabilityInfo *BPI) {
+  auto MaxProb = BranchProbability::getZero();
+  const BasicBlock *MaxSucc = nullptr;
     
-    if (block == next) {
-        return true;
+  for (succ_const_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
+    const BasicBlock *Succ = *I;
+    auto Prob = BPI -> getEdgeProbability(BB, Succ);
+      if (Prob > MaxProb) {
+        MaxProb = Prob;
+        MaxSucc = Succ;
+      }
     }
     
-    while (1) {
-        if (next != nullptr) {
-            if (block == next) {
-                return true;
-            }
-        }
-        else {
-            break;
-        }
-        
-        next = BPI->getHotSucc(next);
-        if (next == header) {
-            break;
-        }
+    // Hot probability is at least 4/5 = 80%
+    if (MaxProb >= BranchProbability(4, 5))
+      return MaxSucc;
+    
+  return nullptr;
+}
+
+bool isInFrequentPath(BasicBlock *block, Loop *L, BranchProbabilityInfo *BPI) {
+  BasicBlock *header = L->getHeader();
+  const BasicBlock *next = header;
+    
+  while (1) {
+    if (next != nullptr) {
+      if (block == next) return true;
     }
-    return false;
+    else break;
+    next = hotsucc(next, BPI);
+    if (next == header) break;
+  }
+  return false;
 }
 
 /// Hoist expressions out of the specified loop. Note, alias info for inner
@@ -360,117 +370,71 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
   //     HW2-Requirement: Implement FPLICM for correctness test
   // *****************************************************************
-    BasicBlock *header = L->getHeader();
-    
-    for(BasicBlock *block : L->getBlocks()) {
-        for (Instruction &I : *block) { // iterate instructions
-            if (isa<LoadInst>(I)) {
-                if (isInFrequentPath(block, header, BPI)) {
+  std::vector<std::pair<Instruction*, std::vector<Instruction*>>> hoisting;
+  for(BasicBlock *block: L->getBlocks()) {
+      Instruction *hoisting = nullptr;
+      for (Instruction &I : *block) { // iterate instructions
+          if (hoisting != nullptr) {
+              errs() << "Hoisted instruction: " << *hoisting << "\n";
+              hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+          }
+          hoisting = nullptr;
+          if (isa<LoadInst>(I)) {
+              if (isInFrequentPath(block, L, BPI)) {
+                  bool storeFoundInFrequent = false;
+                  for(BasicBlock *block2 : L->getBlocks()) {
+                      for (Instruction &I2 : *block2) { // iterate instructions
+                          if (isa<StoreInst>(I2)) {
+                              if (isInFrequentPath(block2, L, BPI)) {
+                                  if (I.getOperand(0) == I2.getOperand(1)) {
+                                      storeFoundInFrequent = true;
+                                  }
+                              }
+                          }
+                      }
+                  }
 
-                }
-            }
-        }
-    }
-    
-    for(BasicBlock *block2 : L->getBlocks()) {
-        for (Instruction &I2 : *block2) { // iterate instructions
-            if (isa<StoreInst>(I2)) {
-                errs() << "Instruction Store: " << I2 << "\n";
-                errs() << I2.getOperand(1)->getName() << "\n";
-            }
-        }
-    }
+                  std::vector<Instruction*> stores;
+                  if (!storeFoundInFrequent) {
+                      for(BasicBlock *block2 : L->getBlocks()) {
+                          for (Instruction &I2 : *block2) { // iterate instructions
+                              if (isa<StoreInst>(I2)) {
+                                  if (!isInFrequentPath(block2, L, BPI)) {
+                                      if (I.getOperand(0) == I2.getOperand(1)) {
+
+                                          hoisting = &I;
+
+                                          auto new_instruction = I.clone();
+                                          new_instruction->insertAfter(&I2);
+
+                                          stores.push_back();
+
+                                          Changed = true;
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+
+              }
+          }
+      }
+      if (hoisting != nullptr) {
+          errs() << "Hoisted instruction: " << *hoisting << "\n";
+          hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+      }
+
+
+  }
 
   return Changed;
 }
 
 
 
-
-
-
-
 char Performance::FPLICMPass::ID = 1;
 static RegisterPass<Performance::FPLICMPass> Y("fplicm-performance", "Frequent Loop Invariant Code Motion for performance test");
-
-
-bool isInFrequentPath(BasicBlock *block, BasicBlock *header, BranchProbabilityInfo *BPI) {
-    const BasicBlock *next = header;
-    while ((next = BPI->getHotSucc(next)) && next != header) {
-        if (next == block) return true;
-    }
-   
-    return false;
-}
-
-
-/// Hoist expressions out of the specified loop. Note, alias info for inner
-/// loop is not preserved so it is not a good idea to run FPLICM multiple
-/// times on one loop.
-/// We should delete AST for inner loops in the new pass manager to avoid
-/// memory leak.
-///
-bool Correctness::LoopInvariantCodeMotion::runOnLoop(
-    Loop *L, AliasAnalysis *AA, LoopInfo *LI, DominatorTree *DT,
-    TargetLibraryInfo *TLI, TargetTransformInfo *TTI, ScalarEvolution *SE,
-    MemorySSA *MSSA, OptimizationRemarkEmitter *ORE, bool DeleteAST,
-    BranchProbabilityInfo *BPI, BlockFrequencyInfo *BFI) {
-
-
-  bool Changed = false;
-
-  assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");
-
-  std::unique_ptr<AliasSetTracker> CurAST;
-  std::unique_ptr<MemorySSAUpdater> MSSAU;
-  if (!MSSA) {
-    LLVM_DEBUG(dbgs() << "FPLICM: Using Alias Set Tracker.\n");
-    CurAST = collectAliasInfoForLoop(L, LI, AA);
-  } else {
-    LLVM_DEBUG(dbgs() << "FPLICM: Using MemorySSA. Promotion disabled.\n");
-    MSSAU = make_unique<MemorySSAUpdater>(MSSA);
-  }
-
-  // Get the preheader block to move instructions into...
-  BasicBlock *Preheader = L->getLoopPreheader();
-
-  // Compute loop safety information.
-  ICFLoopSafetyInfo SafetyInfo(DT);
-  SafetyInfo.computeLoopSafetyInfo(L);
-
-  // *****************************************************************
-  //     HW2-Requirement: Implement FPLICM for correctness test
-  // *****************************************************************
-
-  // SinkAndHoistLICMFlags Flags = {NoOfMemAccTooLarge, LicmMssaOptCounter,
-  //                               LicmMssaOptCap, LicmMssaNoAccForPromotionCap,
-  //                               /*IsSink=*/true};
-  // if (L->hasDedicatedExits())
-  //   Changed |= sinkRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, TTI, L,
-  //                         CurAST.get(), MSSAU.get(), &SafetyInfo, Flags, ORE);
-  // Flags.IsSink = false;
-  // if (Preheader)
-  //   Changed |= hoistRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, L,
-  //                         CurAST.get(), MSSAU.get(), &SafetyInfo, Flags, ORE);
-
-
-
-	BasicBlock *header = L->getHeader();
-
-  for(BasicBlock *block : L->getBlocks()) {
-
-      // for (Instruction &I : *block) { // iterate instructions
-
-      //     unsigned int opcode = I.getOpcode();
-
-      //     if (opcode == Instruction::Store) {
-
-      //     }
-      // }
-  }
-
-  return Changed;
-}
 
 
 /// Hoist expressions out of the specified loop. Note, alias info for inner
