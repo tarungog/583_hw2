@@ -388,7 +388,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   for (BasicBlock *block: L->getBlocks()) {
     Instruction *hoisting = nullptr;
     for (Instruction &I : *block) { // iterate instructions
-      if (hoisting) {
+      if (hoisting != nullptr) {
         errs() << "Hoisted instruction: " << *hoisting << "\n";
         hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
       }
@@ -397,18 +397,19 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       if (isa<LoadInst>(I)) {
         if (isInFrequentPath(block, L, BPI)) {
           bool storeFoundInFrequent = false;
+
           for(BasicBlock *block2 : L->getBlocks()) {
               for (Instruction &I2 : *block2) { // iterate instructions
                 if (isa<StoreInst>(I2)) {
                   if (isInFrequentPath(block2, L, BPI)) {
                     if (I.getOperand(0) == I2.getOperand(1)) {
                         storeFoundInFrequent = true;
-                        // break;
+                        break;
                     }
                   }
                 }
               }
-            // if (storeFoundInFrequent) break;
+            if (storeFoundInFrequent) break;
           }
 
           if (!storeFoundInFrequent) {
@@ -432,13 +433,13 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                       //   Entry->getTerminator()
                       // );
 
-                      auto new_instruction = I2.clone();
+                      auto new_instruction = I.clone();
 
                       // errs() << "before changes" << "\n";
 
                       // print_basic_block(block2);
 
-                      new_instruction->insertAfter(&I2);
+                      new_instruction->insertAfter(&I);
                       // errs() << "inserted load: " << *new_instruction << "\n";
                       // errs() << "op0 " << new_instruction->getOperand(0) << " op1 ";
                       // errs() << new_instruction->getOperand(1) << "\n";
