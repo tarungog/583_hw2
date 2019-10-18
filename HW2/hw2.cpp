@@ -384,7 +384,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
 
 
   std::map<Value*, Instruction*> loads;
-  std::map<Value*, std::vector<std::pair<Instruction*, bool>> stores;
+  std::map<Value*, std::vector<std::pair<Instruction*, bool>>> stores;
 
   for (BasicBlock *block: L->getBlocks()) {
     bool freqpath = isInFrequentPath(block, L, BPI)
