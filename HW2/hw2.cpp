@@ -382,8 +382,6 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
 
 
-  std::unordered_map<Value*,
-                      std::vector<std::pair<Instruction*>, bool> memdepends;
 
   std::map<Value*, Instruction*> loads;
   std::map<Value*, std::vector<std::pair<Instruction*, bool>> stores;
