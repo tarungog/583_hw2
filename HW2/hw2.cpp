@@ -382,17 +382,17 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
 
 
-  std::unordered_map<Instruction*,
-                      std::vector<std::pair<Instruction*>, bool> memdepends;
+  // std::unordered_map<Instruction*,
+  //                     std::vector<std::pair<Instruction*>, bool> memdepends;
 
-  std::map<Instruction*> loads;
+  // std::map<Instruction*> loads;
 
-  for (BasicBlock *block: L->getBlocks()) {
-    bool freqpath = isInFrequentPath(block, L, BPI)
-    for (Instruction &I : *block) {
-        if (isa<LoadInst>(*I)) memdepends[I];
-    }
-  }
+  // for (BasicBlock *block: L->getBlocks()) {
+  //   bool freqpath = isInFrequentPath(block, L, BPI)
+  //   for (Instruction &I : *block) {
+  //       if (isa<LoadInst>(*I)) memdepends[I];
+  //   }
+  // }
 
 
 
