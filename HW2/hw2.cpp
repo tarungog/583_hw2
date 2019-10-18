@@ -442,18 +442,23 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         }
       }
 
-      // for (User *U : load->users()) {
-      //   if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
-      //     auto new_store = SI->clone();
-      //     new_store->insertAfter(SI);
-      //     new_store->setOperand(1, Val);
-      //   }
-      //   else if (Instruction *I = dyn_cast<Instruction>(U)) {
-      //     for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
-      //       if (I->getOperand(i) == load) I->setOperand(i, new_load);
-      //     }
-      //   }
-      // }
+      for (User *U : load->users()) {
+        if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+          continue;
+        }
+        else if (Instruction *I = dyn_cast<Instruction>(U)) {
+          for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
+            if (I->getOperand(i) == load) I->setOperand(i, new_load);
+          }
+        }
+      }
+
+      for (User *U : load->users()) {
+        if (Instruction *I = dyn_cast<Instruction>(U)) {
+          errs() << *I << '\n';
+        }
+      }
+
     }
   }
 
