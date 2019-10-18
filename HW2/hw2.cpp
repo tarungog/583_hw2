@@ -448,7 +448,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                       auto y = I2.getOperand(1);
 
 
-                      errs() << "x type is " << typeid(x).name() << std::endl;
+                      errs() << "x type is " << typeid(I.getOperand(0)).name() << std::endl;
 
 
                       auto new_instruction = I.clone();
