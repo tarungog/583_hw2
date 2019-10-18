@@ -390,6 +390,10 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     bool freq = isInFrequentPath(block, L, BPI);
     for (Instruction &I : *block) { // iterate instructions
       hoisting = nullptr;
+      if (hoisting) {
+        errs() << "Hoisted instruction: " << *hoisting << "\n";
+        hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+      }
       if (isa<LoadInst>(I)) {
         if (freq) {
           bool storeFoundInFrequent = false;
@@ -415,9 +419,6 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                   if (!isInFrequentPath(block2, L, BPI)) {
                     if (I.getOperand(0) == I2.getOperand(1)) {
                       hoisting = &I;
-
-                      errs() << "Hoisted instruction: " << *hoisting << "\n";
-                      hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
                       // AllocaInst *Val = new AllocaInst(
                       //   I->getType(),
                       //   0,
