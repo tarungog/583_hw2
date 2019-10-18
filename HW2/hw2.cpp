@@ -411,7 +411,13 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
     if (loaded_in_infreq) {
       Changed = true;
       Instruction* load = it.second;
-      Instruction* prev = load->getPrevNonDebugInstruction();
+
+      auto new_load = load->clone();
+      // new_load->setOperand(0, Val);
+      errs() << "load is " << *load << '\n';
+      errs() << "new load is " << *new_load << '\n';
+      new_load->insertAfter(prev);
+
       hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
 
       AllocaInst *Val = new AllocaInst(
@@ -428,11 +434,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         Preheader->getTerminator()
       );
 
-      auto new_load = load->clone();
-      new_load->setOperand(0, Val);
-      errs() << "prev is " << *prev << '\n';
-      errs() << *new_load << '\n';
-      new_load->insertAfter(prev);
+
 
       // for (User *U : load->users()) {
       //   if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
