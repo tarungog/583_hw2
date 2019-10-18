@@ -456,6 +456,8 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
             if (I->getOperand(i) == load) {
               I->setOperand(i, new_load);
               errs() << "replaced operand " << '\n';
+              errs() << "new instructino is " << *I << '\n';
+
             }
             else {
               errs() << "didnt replace operand " << '\n';
