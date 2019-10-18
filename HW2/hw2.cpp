@@ -382,107 +382,160 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
 
 
-  // std::unordered_map<Instruction*,
-  //                     std::vector<std::pair<Instruction*>, bool> memdepends;
+  std::unordered_map<Value*,
+                      std::vector<std::pair<Instruction*>, bool> memdepends;
 
-  // std::map<Instruction*> loads;
-
-  // for (BasicBlock *block: L->getBlocks()) {
-  //   bool freqpath = isInFrequentPath(block, L, BPI)
-  //   for (Instruction &I : *block) {
-  //       if (isa<LoadInst>(*I)) memdepends[I];
-  //   }
-  // }
-
-
-
+  std::map<Value*, Instruction*> loads;
+  std::map<Value*, std::vector<std::pair<Instruction*, bool>> stores;
 
   for (BasicBlock *block: L->getBlocks()) {
-    Instruction *hoisting = nullptr;
-    for (Instruction &I : *block) { // iterate instructions
-      if (hoisting != nullptr) {
-        errs() << "Hoisted instruction: " << *hoisting << "\n";
-        hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+    bool freqpath = isInFrequentPath(block, L, BPI)
+    for (Instruction &I : *block) {
+        if (isa<LoadInst>(*I)) loads[I.getPointerOperand()] = &I;
+        if (isa<StoreInst>(*I))
+          stores[I.getPointerOperand()].push_back({&I, freqpath});
+    }
+  }
+
+  for (auto it: loads) {
+    auto &store_vec = stores[it->first];
+    bool loaded_in_freq = false;
+    bool loaded_in_infreq = false;
+    for (auto iter: store_vec) {
+      if (iter->second) {
+        loaded_in_freq = true;
+      } else {
+        loaded_in_infreq = true;
       }
-      hoisting = nullptr;
+    }
 
-      if (isa<LoadInst>(I)) {
-        if (isInFrequentPath(block, L, BPI)) {
-          bool storeFoundInFrequent = false;
+    if (loaded_in_freq) continue;
+    if (loaded_in_infreq) {
+      Changed = true;
+      Instruction* load = loads[it->first];
+      Instruction* prev = load->getPrevNonDebugInstruction();
+      hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
 
-          for(BasicBlock *block2 : L->getBlocks()) {
-              for (Instruction &I2 : *block2) { // iterate instructions
-                if (isa<StoreInst>(I2)) {
-                  if (isInFrequentPath(block2, L, BPI)) {
-                    if (I.getOperand(0) == I2.getOperand(1)) {
-                        storeFoundInFrequent = true;
-                        break;
-                    }
-                  }
-                }
-              }
-            if (storeFoundInFrequent) break;
-          }
+      AllocaInst *Val = new AllocaInst(
+        load->getType(),
+        0,
+        0,
+        "",
+        Preheader->getTerminator()
+      );
 
-          if (!storeFoundInFrequent) {
-            for(BasicBlock *block2 : L->getBlocks()) {
-              for (Instruction &I2 : *block2) { // iterate instructions
-                if (isa<StoreInst>(I2)) {
-                  if (!isInFrequentPath(block2, L, BPI)) {
-                    if (I.getOperand(0) == I2.getOperand(1)) {
-                      hoisting = &I;
-                      // AllocaInst *Val = new AllocaInst(
-                      //   I->getType(),
-                      //   0,
-                      //   0,
-                      //   "",
-                      //   Preheader->getTerminator()
-                      // );
+      StoreInst *ST = new StoreInst(
+        load,
+        Val,
+        Preheader->getTerminator()
+      );
 
-                      // StoreInst *ST = new StoreInst(
-                      //   hoisting,
-                      //   Val,
-                      //   Entry->getTerminator()
-                      // );
-                      auto x = I.getOperand(0);
-                      auto y = I2.getOperand(1);
+      auto new_load = load.clone();
+      new_load->setPointerOperand(Val);
+      new_load->insertAfter(prev);
 
-
-                      errs() << "x type is " << typeid(I.getOperand(0)).name() << std::endl;
-
-
-                      auto new_instruction = I.clone();
-
-                      errs() << "before changes" << "\n";
-
-                      print_basic_block(block2);
-
-                      new_instruction->insertAfter(&I2);
-
-                      errs() << "original load: " << I << '\n';
-
-                      errs() << "inserted load: " << *new_instruction << "\n";
-                      // errs() << "op0 " << new_instruction->getOperand(0) << " op1 ";
-                      // errs() << new_instruction->getOperand(1) << "\n";
-                      errs() << "after changes" << "\n";
-
-                      print_basic_block(block2);
-
-                      Changed = true;
-                    }
-                  }
-                }
-              }
-            }
+      for (User *U : load->users()) {
+        if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+          auto new_store = SI.clone();
+          new_store.insertAfter(SI);
+          new_store.setPointerOperand(Val);
+        }
+        else if (Instruction *I = dyn_cast<Instruction>(U)) {
+          for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
+            if (I->getOperand(i) == load) I->setOperand(i, new_load);
           }
         }
       }
     }
-    if (hoisting != nullptr) {
-      errs() << "Hoisted instruction: " << *hoisting << "\n";
-      hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
-    }
   }
+
+
+  // for (BasicBlock *block: L->getBlocks()) {
+  //   Instruction *hoisting = nullptr;
+  //   for (Instruction &I : *block) { // iterate instructions
+  //     if (hoisting != nullptr) {
+  //       errs() << "Hoisted instruction: " << *hoisting << "\n";
+  //       hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+  //     }
+  //     hoisting = nullptr;
+
+  //     if (isa<LoadInst>(I)) {
+  //       if (isInFrequentPath(block, L, BPI)) {
+  //         bool storeFoundInFrequent = false;
+
+  //         for(BasicBlock *block2 : L->getBlocks()) {
+  //             for (Instruction &I2 : *block2) { // iterate instructions
+  //               if (isa<StoreInst>(I2)) {
+  //                 if (isInFrequentPath(block2, L, BPI)) {
+  //                   if (I.getOperand(0) == I2.getOperand(1)) {
+  //                       storeFoundInFrequent = true;
+  //                       break;
+  //                   }
+  //                 }
+  //               }
+  //             }
+  //           if (storeFoundInFrequent) break;
+  //         }
+
+  //         if (!storeFoundInFrequent) {
+  //           for(BasicBlock *block2 : L->getBlocks()) {
+  //             for (Instruction &I2 : *block2) { // iterate instructions
+  //               if (isa<StoreInst>(I2)) {
+  //                 if (!isInFrequentPath(block2, L, BPI)) {
+  //                   if (I.getOperand(0) == I2.getOperand(1)) {
+  //                     hoisting = &I;
+  //                     // AllocaInst *Val = new AllocaInst(
+  //                     //   I->getType(),
+  //                     //   0,
+  //                     //   0,
+  //                     //   "",
+  //                     //   Preheader->getTerminator()
+  //                     // );
+
+  //                     // StoreInst *ST = new StoreInst(
+  //                     //   hoisting,
+  //                     //   Val,
+  //                     //   Entry->getTerminator()
+  //                     // );
+  //                     auto x = I.getOperand(0);
+  //                     auto y = I2.getOperand(1);
+
+
+  //                     errs() << "x type is " << typeid(I.getOperand(0)).name() << std::endl;
+
+
+  //                     auto new_instruction = I.clone();
+
+  //                     errs() << "before changes" << "\n";
+
+  //                     print_basic_block(block2);
+
+  //                     new_instruction->insertAfter(&I2);
+
+  //                     errs() << "original load: " << I << '\n';
+
+  //                     errs() << "inserted load: " << *new_instruction << "\n";
+  //                     // errs() << "op0 " << new_instruction->getOperand(0) << " op1 ";
+  //                     // errs() << new_instruction->getOperand(1) << "\n";
+  //                     errs() << "after changes" << "\n";
+
+  //                     print_basic_block(block2);
+
+  //                     Changed = true;
+  //                   }
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   if (hoisting != nullptr) {
+  //     errs() << "Hoisted instruction: " << *hoisting << "\n";
+  //     hoist(*hoisting, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
+  //   }
+  // }
   return Changed;
 }
 
