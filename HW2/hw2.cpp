@@ -440,6 +440,9 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                       print_basic_block(block2);
 
                       new_instruction->insertAfter(&I2);
+
+                      errs() << "original load: " << I << '\n';
+
                       errs() << "inserted load: " << *new_instruction << "\n";
                       // errs() << "op0 " << new_instruction->getOperand(0) << " op1 ";
                       // errs() << new_instruction->getOperand(1) << "\n";
