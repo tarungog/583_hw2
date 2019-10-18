@@ -413,10 +413,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
       Instruction* load = it.second;
 
       auto new_load = load->clone();
-      // new_load->setOperand(0, Val);
-      errs() << "load is " << *load << '\n';
       new_load->insertAfter(load);
-      errs() << "new load is " << *new_load << '\n';
 
       hoist(*load, DT, L, Preheader, &SafetyInfo, MSSAU.get(), ORE);
 
@@ -424,7 +421,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         load->getType(),
         0,
         0,
-        "",
+        "temp",
         Preheader->getTerminator()
       );
 
@@ -434,6 +431,10 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         Preheader->getTerminator()
       );
 
+      new_load->setOperand(0, Val);
+
+      errs() << "load is " << *load << '\n';
+      errs() << "new load is " << *new_load << '\n';
 
 
       // for (User *U : load->users()) {
