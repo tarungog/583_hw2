@@ -452,7 +452,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
           errs() << "found nonstore user operand " << '\n';
           errs() << I->getNumOperands() << '\n';
 
-          for (int i = I->getNumOperands(); i < I->getNumOperands(); i++) {
+          for (int i = 0; i < I->getNumOperands(); i++) {
             if (I->getOperand(i) == load) {
               I->setOperand(i, new_load);
               errs() << "replaced operand " << '\n';
