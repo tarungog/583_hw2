@@ -389,8 +389,8 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   for (BasicBlock *block: L->getBlocks()) {
     bool freqpath = isInFrequentPath(block, L, BPI);
     for (Instruction &I : *block) {
-        if (isa<LoadInst>(*I)) loads[I.getPointerOperand()] = &I;
-        if (isa<StoreInst>(*I))
+        if (isa<LoadInst>(I)) loads[I.getOperand(0)] = &I;
+        if (isa<StoreInst>(I))
           stores[I.getOperand(1)].push_back({&I, freqpath});
     }
   }
