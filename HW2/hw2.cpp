@@ -382,9 +382,21 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
   // *****************************************************************
 
 
-  std::unordered_map<Instruction*, std::vector<Instruction*> > memdepends;
+  std::unordered_map<Instruction*,
+                      std::vector<std::pair<Instruction*>, bool> memdepends;
 
-  // std::vector<std::pair<Instruction*, std::vector<Instruction*>>> hoisting;
+  std::map<Instruction*> loads;
+
+  for (BasicBlock *block: L->getBlocks()) {
+    bool freqpath = isInFrequentPath(block, L, BPI)
+    for (Instruction &I : *block) {
+        if (isa<LoadInst>(*I)) memdepends[I];
+    }
+  }
+
+
+
+
   for (BasicBlock *block: L->getBlocks()) {
     Instruction *hoisting = nullptr;
     for (Instruction &I : *block) { // iterate instructions
@@ -432,6 +444,12 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                       //   Val,
                       //   Entry->getTerminator()
                       // );
+                      auto x = I.getOperand(0);
+                      auto y = I2.getOperand(1);
+
+
+                      errs() << 'x is ' << x << ' y is ' << y << '\n';
+
 
                       auto new_instruction = I.clone();
 
