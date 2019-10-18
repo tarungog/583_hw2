@@ -302,6 +302,12 @@ private:
 
 }//namespace
 
+void print_basic_block(const BasicBlock *BB) {
+  for (Instruction &I2 : *BB) { // iterate instructions
+    errs() << *I2 << "\n";
+  }
+}
+
 const BasicBlock * hotsucc(const BasicBlock *BB, BranchProbabilityInfo *BPI) {
   auto MaxProb = BranchProbability::getZero();
   const BasicBlock *MaxSucc = nullptr;
@@ -412,8 +418,18 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
                       hoisting = &I;
 
                       auto new_instruction = I.clone();
+
+                      errs() << "before changes" << "\n";
+
+                      print_basic_block(block2);
+
                       new_instruction->insertAfter(&I2);
                       errs() << "inserted load: " << *new_instruction << "\n";
+
+                      errs() << "after changes" << "\n";
+
+                      print_basic_block(block2);
+
 
                       Changed = true;
                     }
