@@ -428,13 +428,13 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
         Preheader->getTerminator()
       );
 
-      auto new_load = load.clone();
+      auto new_load = load->clone();
       new_load->setPointerOperand(Val);
       new_load->insertAfter(prev);
 
       for (User *U : load->users()) {
         if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
-          auto new_store = SI.clone();
+          auto new_store = SI->clone();
           new_store.insertAfter(SI);
           new_store.setPointerOperand(Val);
         }
