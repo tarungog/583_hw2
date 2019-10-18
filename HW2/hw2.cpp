@@ -430,6 +430,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
 
       auto new_load = load->clone();
       new_load->setOperand(0, Val);
+      errs() << *new_load << '\n';
       new_load->insertAfter(prev);
 
       // for (User *U : load->users()) {
