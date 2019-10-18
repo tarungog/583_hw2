@@ -378,7 +378,7 @@ bool Correctness::LoopInvariantCodeMotion::runOnLoop(
 
   std::unordered_map<Instruction*, std::vector<Instruction*>>
 
-  std::vector<std::pair<Instruction*, std::vector<Instruction*>>> hoisting;
+  // std::vector<std::pair<Instruction*, std::vector<Instruction*>>> hoisting;
   for(BasicBlock *block: L->getBlocks()) {
     Instruction *hoisting = nullptr;
     bool freq = isInFrequentPath(block, L, BPI);
